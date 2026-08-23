@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { Platform } from "react-native";
 import {
   AudioModule,
   AudioQuality,
@@ -10,6 +11,8 @@ import {
 } from "expo-audio";
 
 export type RecorderPhase = "idle" | "recording" | "processing";
+
+const WEB_RECORDING_WARMUP_MS = 400;
 
 export class MicPermissionDeniedError extends Error {
   constructor() {
@@ -73,6 +76,15 @@ export function useVoiceRecorder() {
     if (!granted) throw new MicPermissionDeniedError();
     await recorder.prepareToRecordAsync();
     recorder.record();
+    if (Platform.OS === "web") {
+      // WebKit-based mobile browsers (Safari, and every other iOS browser —
+      // Apple requires them all to use WebKit) are known to drop or mute
+      // roughly the first 200-500ms of MediaRecorder audio right after
+      // start(). For a single short word that can be the entire recording,
+      // producing a transcript that's garbage despite the request
+      // succeeding. Absorb that dead zone before cueing the user to speak.
+      await new Promise((resolve) => setTimeout(resolve, WEB_RECORDING_WARMUP_MS));
+    }
     setPhase("recording");
   }, [ensurePermission, recorder]);
 

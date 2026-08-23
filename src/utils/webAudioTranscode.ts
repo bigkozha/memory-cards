@@ -10,11 +10,18 @@ export async function transcodeToWavBlob(blob: Blob): Promise<Blob> {
     throw new Error("Web Audio API is not available to transcode the recording to WAV.");
   }
 
+  console.log(`[transcode] input blob: ${blob.type}, ${blob.size} bytes`);
   const arrayBuffer = await blob.arrayBuffer();
   const audioCtx = new AudioContextCtor();
   try {
     const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-    return new Blob([audioBufferToWav(audioBuffer)], { type: "audio/wav" });
+    console.log(
+      `[transcode] decoded: ${audioBuffer.duration.toFixed(3)}s, ` +
+        `${audioBuffer.numberOfChannels}ch, ${audioBuffer.sampleRate}Hz`
+    );
+    const wavBlob = new Blob([audioBufferToWav(audioBuffer)], { type: "audio/wav" });
+    console.log(`[transcode] output WAV: ${wavBlob.size} bytes`);
+    return wavBlob;
   } finally {
     await audioCtx.close();
   }
