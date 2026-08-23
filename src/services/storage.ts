@@ -8,6 +8,7 @@ export const emptyProgress: UserProgress = {
   streakDays: 0,
   cardProgress: {},
   sessions: [],
+  customCards: [],
 };
 
 export async function loadProgress(): Promise<UserProgress> {

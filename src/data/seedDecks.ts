@@ -104,3 +104,19 @@ export const words: WordCard[] = [
 export function wordsForDeck(deckId: string): WordCard[] {
   return words.filter((w) => w.deckId === deckId);
 }
+
+export const CUSTOM_DECK_ID = "custom";
+
+export const CUSTOM_DECK: Deck = {
+  id: CUSTOM_DECK_ID,
+  title: "Мои карточки",
+  description: "Слова, которые вы добавили сами",
+  locale: "kk-KZ",
+  color: ["#3E8E7E", "#7FD8BE"],
+  emoji: "✏️",
+};
+
+/** Like wordsForDeck, but also resolves the user's own custom deck. */
+export function cardsForDeck(deckId: string, customCards: WordCard[]): WordCard[] {
+  return deckId === CUSTOM_DECK_ID ? customCards : wordsForDeck(deckId);
+}

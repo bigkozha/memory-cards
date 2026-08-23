@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { wordsForDeck, decks } from "../data/seedDecks";
+import { cardsForDeck } from "../data/seedDecks";
 import { colors, radii, spacing } from "../theme";
 import { FlashCard, PlayState } from "../components/FlashCard";
 import { MicButton } from "../components/MicButton";
@@ -25,14 +25,14 @@ interface Attempt {
 
 export function StudyScreen({ route, navigation }: Props) {
   const { deckId } = route.params;
-  const deck = decks.find((d) => d.id === deckId)!;
+  const { progress, recordAttempt, finishSession } = useAppState();
   const cards = useMemo(() => {
-    const list = wordsForDeck(deckId);
+    const list = cardsForDeck(deckId, progress.customCards);
     // Shuffle so repeat sessions don't feel identical.
     return [...list].sort(() => Math.random() - 0.5);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckId]);
 
-  const { recordAttempt, finishSession } = useAppState();
   const recorder = useVoiceRecorder();
 
   const [index, setIndex] = useState(0);
@@ -164,6 +164,19 @@ export function StudyScreen({ route, navigation }: Props) {
     setIndex((i) => i + 1);
   }
 
+  if (!card) {
+    return (
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+        <View style={styles.emptyDeck}>
+          <Text style={styles.emptyDeckText}>В этой колоде пока нет карточек.</Text>
+          <Pressable style={styles.nextButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.nextButtonText}>Назад</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <View style={styles.topBar}>
@@ -293,4 +306,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   nextButtonText: { color: "#fff", fontWeight: "800", fontSize: 16 },
+  emptyDeck: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing(4),
+    gap: spacing(2),
+  },
+  emptyDeckText: { color: colors.textDim, fontSize: 15, textAlign: "center" },
 });

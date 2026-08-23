@@ -1,10 +1,12 @@
+import { Platform } from "react-native";
 import { AsrResponse } from "../types";
-import { NCSPEECH_API_KEY } from "../config/env";
+import { PROXY_BASE_URL } from "../config/env";
+import { transcodeToWavBlob } from "../utils/webAudioTranscode";
 
 /**
  * Request shape matches NCSpeech Studio's real transcription endpoint
  * (POST {base}/v1/audio/transcriptions, multipart/form-data) so swapping
- * MockAsrProvider for RealNcSpeechProvider below is a like-for-like change.
+ * MockAsrProvider for RealProxyAsrProvider below is a like-for-like change.
  * Source: NCSpeech Studio user instructions, ed. 08.2026 (studio.ncspeech.ai).
  */
 export interface AsrRequest {
@@ -30,39 +32,44 @@ export interface AsrProvider {
   transcribe(request: AsrRequest): Promise<AsrResponse>;
 }
 
-const NCSPEECH_BASE_URL = "https://studio.ncspeech.ai/v1";
-
 /**
- * Real provider wired to NCSpeech Studio's API. Not used by default — see
- * getAsrProvider() below — because this app ships without an API key. Once
- * EXPO_PUBLIC_NCSPEECH_API_KEY is set, the app switches to this provider
- * automatically without any other code changes.
+ * Real provider wired to our own proxy Worker (see /server), which injects
+ * the real NCSpeech API key server-side — the app never holds it. Not used
+ * by default — see getAsrProvider() below — because this app ships without
+ * a proxy URL configured. Once EXPO_PUBLIC_PROXY_BASE_URL is set, the app
+ * switches to this provider automatically without any other code changes.
+ * See https://github.com/bigkozha/memory-cards/issues/1 for why this exists
+ * instead of calling studio.ncspeech.ai directly with an embedded key.
  *
- * Response mapping matches `verbose_json` as confirmed against a live call:
- * { text, segments: [{ words: [{ word, confidence, ... }] }], billed_credits, ... }.
+ * Response mapping matches NCSpeech's `verbose_json` as confirmed against a
+ * live call: { text, segments: [{ words: [{ word, confidence, ... }] }] }.
  * Still worth spot-checking against the account's API tab occasionally — the
  * docs explicitly warn the copy on paper can go stale.
- *
- * Web caveat: this fetch runs from the browser on the Expo web target.
- * NCSpeech's API has no reason to allow browser-origin requests (it's built
- * for server/native callers), so a direct call from web will fail CORS
- * preflight — the browser surfaces that as a generic "Failed to fetch" with
- * no further detail. Native iOS/Android builds aren't subject to CORS and
- * call this endpoint directly without issue; a production web deployment
- * would need to proxy this request through your own backend instead.
  */
-export class RealNcSpeechProvider implements AsrProvider {
-  constructor(private apiKey: string, private baseUrl: string = NCSPEECH_BASE_URL) {}
+export class RealProxyAsrProvider implements AsrProvider {
+  constructor(private baseUrl: string) {}
 
   async transcribe(request: AsrRequest): Promise<AsrResponse> {
     // Expo SDK 57's fetch/FormData (a WinterCG implementation, not RN's old
     // fetch) dropped support for the classic RN `{ uri, name, type }` file
     // part — it requires a real Blob. Read the local recording into one first.
-    const fileBlob = await (await fetch(request.audioUri)).blob();
+    let fileBlob = await (await fetch(request.audioUri)).blob();
+
+    // NCSpeech's ASR reliably handles WAV/PCM but 500s on compressed
+    // containers — confirmed for both AAC (native) and WebM (web). Native
+    // recording already produces WAV directly; browsers can only record
+    // compressed formats via MediaRecorder, so decode + re-encode here.
+    if (Platform.OS === "web" && !fileBlob.type.includes("wav")) {
+      console.log(`[asr-proxy] transcoding ${fileBlob.type} to WAV for web…`);
+      fileBlob = await transcodeToWavBlob(fileBlob);
+    }
+
     // The server appears to sniff the container from the filename extension
     // (a WAV recording sent as "attempt.m4a" previously triggered a 500), so
-    // keep the real extension from the recorder's own output URI.
-    const extension = request.audioUri.split(".").pop() || "m4a";
+    // keep the real extension. Native recordings have a real file:// path
+    // with an extension; web recordings are blob: URLs with no path
+    // extension at all, so fall back to the Blob's own MIME type there.
+    const extension = extensionFromUri(request.audioUri, fileBlob.type);
 
     const form = new FormData();
     form.append("file", fileBlob, `attempt.${extension}`);
@@ -70,22 +77,23 @@ export class RealNcSpeechProvider implements AsrProvider {
     if (request.boost?.length) form.append("boost", request.boost.join(","));
     form.append("response_format", "verbose_json");
 
-    console.log(`[ncspeech] POST ${this.baseUrl}/audio/transcriptions`, {
+    console.log(`[asr-proxy] POST ${this.baseUrl}/audio/transcriptions`, {
       audioUri: request.audioUri,
+      blobType: fileBlob.type,
+      filename: `attempt.${extension}`,
       language: request.locale ? localeToLanguageCode(request.locale) : undefined,
       boost: request.boost,
     });
 
     const res = await fetch(`${this.baseUrl}/audio/transcriptions`, {
       method: "POST",
-      headers: { "X-API-Key": this.apiKey },
       body: form,
     });
 
-    console.log(`[ncspeech] response status: ${res.status}`);
+    console.log(`[asr-proxy] response status: ${res.status}`);
 
     if (!res.ok) {
-      throw new Error(`NCSpeech transcription failed: ${res.status} ${await res.text()}`);
+      throw new Error(`Transcription proxy failed: ${res.status} ${await res.text()}`);
     }
 
     const json = await res.json();
@@ -99,6 +107,26 @@ function localeToLanguageCode(locale: string): string {
   const base = locale.split("-")[0].toLowerCase();
   // NCSpeech's own docs use "kz" (not the ISO 639-1 "kk") for Kazakh.
   return base === "kk" ? "kz" : base;
+}
+
+const MIME_TO_EXTENSION: Record<string, string> = {
+  "audio/webm": "webm",
+  "audio/wav": "wav",
+  "audio/x-wav": "wav",
+  "audio/wave": "wav",
+  "audio/mp4": "mp4",
+  "audio/m4a": "m4a",
+  "audio/aac": "aac",
+  "audio/ogg": "ogg",
+  "audio/mpeg": "mp3",
+};
+
+function extensionFromUri(uri: string, mimeType: string): string {
+  const lastSegment = uri.split("/").pop() ?? "";
+  const dotIndex = lastSegment.lastIndexOf(".");
+  if (dotIndex > 0) return lastSegment.slice(dotIndex + 1);
+  const base = mimeType.split(";")[0]?.trim().toLowerCase() ?? "";
+  return MIME_TO_EXTENSION[base] ?? "m4a";
 }
 
 /**
@@ -163,13 +191,13 @@ export class MockAsrProvider implements AsrProvider {
   }
 }
 
-/** Picks the real provider once an API key is configured, mock otherwise. */
+/** Picks the real provider once a proxy URL is configured, mock otherwise. */
 export function getAsrProvider(): AsrProvider {
-  if (NCSPEECH_API_KEY) {
-    console.log("[asr] EXPO_PUBLIC_NCSPEECH_API_KEY found — using RealNcSpeechProvider");
-    return new RealNcSpeechProvider(NCSPEECH_API_KEY);
+  if (PROXY_BASE_URL) {
+    console.log("[asr] EXPO_PUBLIC_PROXY_BASE_URL found — using RealProxyAsrProvider");
+    return new RealProxyAsrProvider(PROXY_BASE_URL);
   }
-  console.log("[asr] no API key configured — using MockAsrProvider");
+  console.log("[asr] no proxy URL configured — using MockAsrProvider");
   return new MockAsrProvider();
 }
 

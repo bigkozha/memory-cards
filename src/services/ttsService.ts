@@ -1,13 +1,11 @@
 import * as Speech from "expo-speech";
 import { createAudioPlayer } from "expo-audio";
-import { NCSPEECH_API_KEY } from "../config/env";
+import { PROXY_BASE_URL } from "../config/env";
 
 export interface TtsProvider {
   /** Speaks `word` aloud in `locale` and resolves once playback finishes. */
   speak(word: string, locale: string): Promise<void>;
 }
-
-const NCSPEECH_BASE_URL = "https://studio.ncspeech.ai/v1";
 
 function localeToTtsLanguage(locale: string): "ru" | "kz" {
   // NCSpeech's synthesis endpoint only supports ru/kz — every deck in this
@@ -55,14 +53,17 @@ function playDataUri(uri: string): Promise<void> {
 }
 
 /**
- * Real provider wired to NCSpeech Studio's synthesis endpoint (POST
- * {base}/v1/audio/speech). Responses are cached per word+locale for the
- * session so replaying a card doesn't re-bill NCSpeech credits every tap.
+ * Real provider wired to our own proxy Worker (see /server), which injects
+ * the real NCSpeech API key server-side — the app never holds it. See
+ * https://github.com/bigkozha/memory-cards/issues/1 for why this exists
+ * instead of calling studio.ncspeech.ai directly with an embedded key.
+ * Responses are cached per word+locale for the session so replaying a card
+ * doesn't re-bill NCSpeech credits every tap.
  */
-export class RealNcSpeechTtsProvider implements TtsProvider {
+export class RealProxyTtsProvider implements TtsProvider {
   private cache = new Map<string, string>();
 
-  constructor(private apiKey: string, private baseUrl: string = NCSPEECH_BASE_URL) {}
+  constructor(private baseUrl: string) {}
 
   async speak(word: string, locale: string): Promise<void> {
     const cacheKey = `${locale}:${word}`;
@@ -75,21 +76,21 @@ export class RealNcSpeechTtsProvider implements TtsProvider {
         language: localeToTtsLanguage(locale),
         response_format: "wav" as const,
       };
-      console.log(`[tts] POST ${this.baseUrl}/audio/speech — request body:`, body);
+      console.log(`[tts-proxy] POST ${this.baseUrl}/audio/speech — request body:`, body);
       const res = await fetch(`${this.baseUrl}/audio/speech`, {
         method: "POST",
-        headers: { "X-API-Key": this.apiKey, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      console.log(`[tts] response status: ${res.status}`);
+      console.log(`[tts-proxy] response status: ${res.status}`);
       if (!res.ok) {
-        throw new Error(`NCSpeech synthesis failed: ${res.status} ${await res.text()}`);
+        throw new Error(`Synthesis proxy failed: ${res.status} ${await res.text()}`);
       }
       const bytes = new Uint8Array(await res.arrayBuffer());
       dataUri = `data:audio/wav;base64,${bytesToBase64(bytes)}`;
       this.cache.set(cacheKey, dataUri);
     } else {
-      console.log(`[tts] cache hit — replaying "${word}" without a new API call`);
+      console.log(`[tts-proxy] cache hit — replaying "${word}" without a new API call`);
     }
 
     await playDataUri(dataUri);
@@ -110,13 +111,13 @@ export class DeviceTtsProvider implements TtsProvider {
   }
 }
 
-/** Picks the real provider once an API key is configured, device TTS otherwise. */
+/** Picks the real provider once a proxy URL is configured, device TTS otherwise. */
 export function getTtsProvider(): TtsProvider {
-  if (NCSPEECH_API_KEY) {
-    console.log("[tts] EXPO_PUBLIC_NCSPEECH_API_KEY found — using RealNcSpeechTtsProvider");
-    return new RealNcSpeechTtsProvider(NCSPEECH_API_KEY);
+  if (PROXY_BASE_URL) {
+    console.log("[tts] EXPO_PUBLIC_PROXY_BASE_URL found — using RealProxyTtsProvider");
+    return new RealProxyTtsProvider(PROXY_BASE_URL);
   }
-  console.log("[tts] no API key configured — using DeviceTtsProvider");
+  console.log("[tts] no proxy URL configured — using DeviceTtsProvider");
   return new DeviceTtsProvider();
 }
 

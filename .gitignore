@@ -33,6 +33,8 @@ yarn-error.*
 # local env files
 .env
 .env*.local
+server/.dev.vars
+server/.wrangler/
 
 # vendor docs (not ours to redistribute)
 NCSpeech_Studio_Instruction.pdf

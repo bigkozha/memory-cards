@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { HomeScreen } from "../screens/HomeScreen";
 import { StudyScreen } from "../screens/StudyScreen";
 import { SummaryScreen } from "../screens/SummaryScreen";
+import { AddCardScreen } from "../screens/AddCardScreen";
 import { colors } from "../theme";
 
 export type RootStackParamList = {
@@ -13,6 +14,7 @@ export type RootStackParamList = {
     deckId: string;
     stats: { correct: number; close: number; incorrect: number; bestCombo: number; cardsSeen: number };
   };
+  AddCard: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -35,6 +37,7 @@ export function RootNavigator() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Study" component={StudyScreen} />
         <Stack.Screen name="Summary" component={SummaryScreen} />
+        <Stack.Screen name="AddCard" component={AddCardScreen} options={{ presentation: "modal" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -2,7 +2,7 @@ import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { decks } from "../data/seedDecks";
+import { CUSTOM_DECK, decks } from "../data/seedDecks";
 import { colors, radii, spacing } from "../theme";
 import { useAppState } from "../context/AppContext";
 import { RootStackParamList } from "../navigation/RootNavigator";
@@ -11,7 +11,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "Summary">;
 
 export function SummaryScreen({ route, navigation }: Props) {
   const { deckId, stats } = route.params;
-  const deck = decks.find((d) => d.id === deckId)!;
+  const deck = [...decks, CUSTOM_DECK].find((d) => d.id === deckId)!;
   const { progress } = useAppState();
 
   const accuracy = stats.cardsSeen > 0 ? Math.round((stats.correct / stats.cardsSeen) * 100) : 0;

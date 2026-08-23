@@ -60,4 +60,5 @@ export interface UserProgress {
   lastStudyDateISO?: string;
   cardProgress: Record<CardId, CardProgress>;
   sessions: SessionStats[];
+  customCards: WordCard[];
 }

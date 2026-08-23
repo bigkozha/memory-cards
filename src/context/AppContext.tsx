@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
-import { CardProgress, PronunciationResult, SessionStats, UserProgress } from "../types";
+import { CardProgress, PronunciationResult, SessionStats, UserProgress, WordCard } from "../types";
 import { emptyProgress, loadProgress, saveProgress, withStreakUpdate } from "../services/storage";
 import { applyResult, newCardProgress, xpForResult } from "../services/srs";
+import { CUSTOM_DECK_ID } from "../data/seedDecks";
 
 interface AppContextValue {
   progress: UserProgress;
@@ -9,6 +10,9 @@ interface AppContextValue {
   recordAttempt: (cardId: string, result: PronunciationResult, combo: number) => void;
   finishSession: (stats: Omit<SessionStats, "finishedAt">) => void;
   getCardProgress: (cardId: string) => CardProgress | undefined;
+  addCustomCard: (card: Omit<WordCard, "id" | "deckId">) => void;
+  updateCustomCard: (cardId: string, updates: Omit<WordCard, "id" | "deckId">) => void;
+  removeCustomCard: (cardId: string) => void;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -56,9 +60,56 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [progress.cardProgress]
   );
 
+  const addCustomCard = useCallback((card: Omit<WordCard, "id" | "deckId">) => {
+    setProgress((prev) => {
+      const newCard: WordCard = {
+        ...card,
+        id: `custom-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+        deckId: CUSTOM_DECK_ID,
+      };
+      return { ...prev, customCards: [...prev.customCards, newCard] };
+    });
+  }, []);
+
+  const updateCustomCard = useCallback((cardId: string, updates: Omit<WordCard, "id" | "deckId">) => {
+    setProgress((prev) => ({
+      ...prev,
+      customCards: prev.customCards.map((c) => (c.id === cardId ? { ...c, ...updates } : c)),
+    }));
+  }, []);
+
+  const removeCustomCard = useCallback((cardId: string) => {
+    setProgress((prev) => {
+      const { [cardId]: _removed, ...restProgress } = prev.cardProgress;
+      return {
+        ...prev,
+        customCards: prev.customCards.filter((c) => c.id !== cardId),
+        cardProgress: restProgress,
+      };
+    });
+  }, []);
+
   const value = useMemo(
-    () => ({ progress, loading, recordAttempt, finishSession, getCardProgress }),
-    [progress, loading, recordAttempt, finishSession, getCardProgress]
+    () => ({
+      progress,
+      loading,
+      recordAttempt,
+      finishSession,
+      getCardProgress,
+      addCustomCard,
+      updateCustomCard,
+      removeCustomCard,
+    }),
+    [
+      progress,
+      loading,
+      recordAttempt,
+      finishSession,
+      getCardProgress,
+      addCustomCard,
+      updateCustomCard,
+      removeCustomCard,
+    ]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
