@@ -1,7 +1,31 @@
 import { Platform } from "react-native";
+import { createAudioPlayer } from "expo-audio";
 import { AsrResponse } from "../types";
 import { PROXY_BASE_URL } from "../config/env";
 import { transcodeToWavBlob } from "../utils/webAudioTranscode";
+
+/**
+ * TEMP DEBUG: plays back the exact clip about to be uploaded, so we can hear
+ * what NCSpeech hears instead of guessing from stats. Remove once the web
+ * mic-quality issue (github.com/bigkozha/memory-cards — silence/garbage
+ * transcripts on iPhone Safari) is confirmed fixed.
+ */
+async function debugPlaybackWeb(blob: Blob): Promise<void> {
+  const url = URL.createObjectURL(blob);
+  console.log("[asr-proxy] DEBUG: playing back the clip about to be sent…");
+  await new Promise<void>((resolve) => {
+    const player = createAudioPlayer(url);
+    const sub = player.addListener("playbackStatusUpdate", (status) => {
+      if (status.didJustFinish) {
+        sub.remove();
+        player.remove();
+        URL.revokeObjectURL(url);
+        resolve();
+      }
+    });
+    player.play();
+  });
+}
 
 /**
  * Request shape matches NCSpeech Studio's real transcription endpoint
@@ -62,6 +86,7 @@ export class RealProxyAsrProvider implements AsrProvider {
     if (Platform.OS === "web" && !fileBlob.type.includes("wav")) {
       console.log(`[asr-proxy] transcoding ${fileBlob.type} to WAV for web…`);
       fileBlob = await transcodeToWavBlob(fileBlob);
+      await debugPlaybackWeb(fileBlob);
     }
 
     // The server appears to sniff the container from the filename extension
