@@ -1,0 +1,2 @@
+i want you to make an mobile app where user can learn new word using memory cards.
+main mechanics - user can choose to say the word written on a card. when he say word - an voice api send back ASR of the word. if the word ASRed correctly to the text on the card than app says about it to the user. (will give you documentation and link to the voice api later make api as a stub now). about other ux ui and user mechnics - suprise me
