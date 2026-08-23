@@ -3,6 +3,16 @@
 // on iOS confirmed it, WebM on web confirms the same limitation). Native
 // recording is set to WAV/LPCM directly (see useVoiceRecorder.ts); for web
 // we decode whatever the browser gave us and re-encode to WAV here instead.
+//
+// WebKit-based mobile browsers (Safari, and every other iOS browser — Apple
+// requires them all to use WebKit) are known to record a stretch of
+// near-silent "dead air" right after MediaRecorder starts. A fixed startup
+// delay (see useVoiceRecorder.ts) helps but the exact dead-zone length
+// varies, so we also trim leading/trailing silence from the decoded audio
+// here — confirmed live on iPhone Safari: a well-formed 1.245s WAV came back
+// from NCSpeech with an empty transcript (confidence defaulting to 0.85,
+// meaning no speech segments were found at all), consistent with the actual
+// voiced portion being diluted or absent from what got sent.
 export async function transcodeToWavBlob(blob: Blob): Promise<Blob> {
   const AudioContextCtor: typeof AudioContext | undefined =
     (globalThis as any).AudioContext ?? (globalThis as any).webkitAudioContext;
@@ -15,11 +25,19 @@ export async function transcodeToWavBlob(blob: Blob): Promise<Blob> {
   const audioCtx = new AudioContextCtor();
   try {
     const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    const peak = peakAmplitude(audioBuffer);
     console.log(
       `[transcode] decoded: ${audioBuffer.duration.toFixed(3)}s, ` +
-        `${audioBuffer.numberOfChannels}ch, ${audioBuffer.sampleRate}Hz`
+        `${audioBuffer.numberOfChannels}ch, ${audioBuffer.sampleRate}Hz, peak amplitude: ${peak.toFixed(4)}`
     );
-    const wavBlob = new Blob([audioBufferToWav(audioBuffer)], { type: "audio/wav" });
+
+    const trimmed = trimSilence(audioBuffer);
+    console.log(
+      `[transcode] after silence trim: kept ${trimmed.duration.toFixed(3)}s ` +
+        `of ${audioBuffer.duration.toFixed(3)}s`
+    );
+
+    const wavBlob = new Blob([encodeWav(trimmed)], { type: "audio/wav" });
     console.log(`[transcode] output WAV: ${wavBlob.size} bytes`);
     return wavBlob;
   } finally {
@@ -27,15 +45,78 @@ export async function transcodeToWavBlob(blob: Blob): Promise<Blob> {
   }
 }
 
-function audioBufferToWav(buffer: AudioBuffer): ArrayBuffer {
+interface TrimmedAudio {
+  channels: Float32Array[];
+  sampleRate: number;
+  duration: number;
+}
+
+function peakAmplitude(buffer: AudioBuffer): number {
+  let peak = 0;
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const data = buffer.getChannelData(c);
+    for (let i = 0; i < data.length; i++) {
+      const abs = Math.abs(data[i]);
+      if (abs > peak) peak = abs;
+    }
+  }
+  return peak;
+}
+
+// Generous threshold (~ -34dB) so we keep quiet speech rather than risk
+// trimming it — this only needs to catch true dead-air, not shape dynamics.
+const SILENCE_THRESHOLD = 0.02;
+const PADDING_MS = 100;
+
+/** Trims leading/trailing near-silence. Falls back to the untrimmed buffer if the whole thing looks silent — better to send it as-is and let the ASR response tell us, than send nothing. */
+function trimSilence(buffer: AudioBuffer): TrimmedAudio {
   const numChannels = buffer.numberOfChannels;
-  const sampleRate = buffer.sampleRate;
+  const channels = Array.from({ length: numChannels }, (_, i) => buffer.getChannelData(i));
+  const length = channels[0].length;
+  const padding = Math.round((PADDING_MS / 1000) * buffer.sampleRate);
+
+  let start = -1;
+  for (let i = 0; i < length && start === -1; i++) {
+    for (const ch of channels) {
+      if (Math.abs(ch[i]) > SILENCE_THRESHOLD) {
+        start = i;
+        break;
+      }
+    }
+  }
+
+  let end = -1;
+  for (let i = length - 1; i >= 0 && end === -1; i--) {
+    for (const ch of channels) {
+      if (Math.abs(ch[i]) > SILENCE_THRESHOLD) {
+        end = i + 1;
+        break;
+      }
+    }
+  }
+
+  if (start === -1 || end === -1 || end <= start) {
+    // Looks entirely silent — don't trim it away to nothing, send as-is.
+    return { channels, sampleRate: buffer.sampleRate, duration: buffer.duration };
+  }
+
+  const trimmedStart = Math.max(0, start - padding);
+  const trimmedEnd = Math.min(length, end + padding);
+  const trimmedChannels = channels.map((data) => data.subarray(trimmedStart, trimmedEnd));
+
+  return {
+    channels: trimmedChannels,
+    sampleRate: buffer.sampleRate,
+    duration: (trimmedEnd - trimmedStart) / buffer.sampleRate,
+  };
+}
+
+function encodeWav(audio: TrimmedAudio): ArrayBuffer {
+  const numChannels = audio.channels.length;
   const bitDepth = 16;
 
   const interleaved =
-    numChannels === 2
-      ? interleaveStereo(buffer.getChannelData(0), buffer.getChannelData(1))
-      : buffer.getChannelData(0);
+    numChannels === 2 ? interleaveStereo(audio.channels[0], audio.channels[1]) : audio.channels[0];
 
   const dataLength = interleaved.length * (bitDepth / 8);
   const arrayBuffer = new ArrayBuffer(44 + dataLength);
@@ -48,8 +129,8 @@ function audioBufferToWav(buffer: AudioBuffer): ArrayBuffer {
   view.setUint32(16, 16, true); // PCM fmt chunk size
   view.setUint16(20, 1, true); // format = PCM
   view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * numChannels * (bitDepth / 8), true); // byte rate
+  view.setUint32(24, audio.sampleRate, true);
+  view.setUint32(28, audio.sampleRate * numChannels * (bitDepth / 8), true); // byte rate
   view.setUint16(32, numChannels * (bitDepth / 8), true); // block align
   view.setUint16(34, bitDepth, true);
   writeString(view, 36, "data");
