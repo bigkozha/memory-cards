@@ -1,0 +1,430 @@
+<title>Конфиденциальность Сөйле</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAF9FC;
+    --surface: #FFFFFF;
+    --surface-alt: #F3F1FA;
+    --text: #1D1B2E;
+    --text-muted: #625F7A;
+    --accent: #6A55E0;
+    --accent-soft: #EFEBFC;
+    --border: #E7E4F3;
+    --font-display: 'Manrope', 'Segoe UI', sans-serif;
+    --font-body: 'Source Serif 4', Georgia, serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1021;
+      --surface: #171935;
+      --surface-alt: #1E2142;
+      --text: #F1F1FA;
+      --text-muted: #A6A9D6;
+      --accent: #A794FF;
+      --accent-soft: rgba(139,124,255,0.14);
+      --border: rgba(255,255,255,0.10);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0F1021;
+    --surface: #171935;
+    --surface-alt: #1E2142;
+    --text: #F1F1FA;
+    --text-muted: #A6A9D6;
+    --accent: #A794FF;
+    --accent-soft: rgba(139,124,255,0.14);
+    --border: rgba(255,255,255,0.10);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+  }
+
+  .brand-mark {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(155deg, #A794FF 0%, #8B7CFF 45%, #5C4CD6 100%);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .brand-mark svg { width: 15px; height: 15px; }
+
+  .lang-toggle {
+    display: flex;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px;
+    font-family: var(--font-display);
+  }
+  .lang-toggle button {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 6px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .lang-toggle button.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  main { max-width: 720px; margin: 0 auto; padding: 56px 24px 96px; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 4vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    text-wrap: balance;
+    margin: 0 0 12px;
+  }
+
+  .lede {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    max-width: 60ch;
+    margin: 0 0 40px;
+  }
+
+  .updated {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: -28px 0 44px;
+  }
+
+  section { margin-bottom: 44px; }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: 6px;
+    padding: 3px 8px;
+    flex-shrink: 0;
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  section p, section li { color: var(--text); max-width: 66ch; }
+  section p { margin: 0 0 14px; }
+
+  ul { margin: 0 0 14px; padding-left: 1.3em; }
+  li { margin-bottom: 8px; }
+
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-display);
+    font-size: 0.92rem;
+    margin: 8px 0 20px;
+  }
+  .data-table th, .data-table td {
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .data-table th {
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .data-table td { color: var(--text); }
+  .tbl-wrap { overflow-x: auto; }
+
+  footer {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px 64px;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    border-top: 1px solid var(--border);
+    padding-top: 28px;
+  }
+
+  [data-lang="en"] { display: none; }
+  [data-lang-active="en"] [data-lang="ru"] { display: none; }
+  [data-lang-active="en"] [data-lang="en"] { display: block; }
+  [data-lang-active="en"] li[data-lang="en"],
+  [data-lang-active="en"] .data-table[data-lang="en"] { display: table; }
+</style>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 220 220" fill="none">
+          <rect x="85" y="30" width="50" height="100" rx="25" fill="white"/>
+          <path d="M60 100 C60 138 82 162 110 162 C138 162 160 138 160 100" stroke="white" stroke-width="16" stroke-linecap="round" fill="none"/>
+          <line x1="110" y1="162" x2="110" y2="192" stroke="white" stroke-width="16" stroke-linecap="round"/>
+          <line x1="82" y1="192" x2="138" y2="192" stroke="white" stroke-width="16" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span>Сөйле</span>
+    </div>
+    <div class="lang-toggle" role="group" aria-label="Language">
+      <button type="button" id="btn-ru" class="active" onclick="setLang('ru')">RU</button>
+      <button type="button" id="btn-en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</header>
+
+<main id="content">
+
+  <div data-lang="ru">
+    <p class="eyebrow">Политика конфиденциальности</p>
+    <h1>Как «Сөйле» обращается с вашими данными</h1>
+    <p class="lede">Коротко: мы не собираем ваше имя, почту или номер телефона. Голосовые записи используются только для проверки произношения и не хранятся нами. Прогресс обучения остаётся на вашем устройстве.</p>
+    <p class="updated">Обновлено 24 августа 2026</p>
+  </div>
+
+  <div data-lang="en">
+    <p class="eyebrow">Privacy Policy</p>
+    <h1>How Сөйле handles your data</h1>
+    <p class="lede">Short version: we don't collect your name, email, or phone number. Voice recordings are used only to check your pronunciation and aren't stored by us. Your learning progress stays on your device.</p>
+    <p class="updated">Updated August 24, 2026</p>
+  </div>
+
+  <section>
+    <div data-lang="ru">
+      <div class="section-head"><span class="section-num">01</span><h2>Что делает приложение</h2></div>
+      <p>«Сөйле» — приложение для практики произношения казахских слов. Вы видите карточку со словом, произносите его вслух, а приложение проверяет, насколько точно вы это сделали, и озвучивает правильное произношение по запросу.</p>
+    </div>
+    <div data-lang="en">
+      <div class="section-head"><span class="section-num">01</span><h2>What the app does</h2></div>
+      <p>Сөйле is an app for practicing the pronunciation of Kazakh words. You see a card with a word, say it out loud, and the app checks how close your pronunciation was — and can read the correct pronunciation back to you on request.</p>
+    </div>
+  </section>
+
+  <section>
+    <div data-lang="ru">
+      <div class="section-head"><span class="section-num">02</span><h2>Голосовые записи</h2></div>
+      <p>Когда вы нажимаете на микрофон, приложение записывает короткий звуковой фрагмент — то слово, которое вы произносите. Эта запись отправляется через наш сервер-посредник в стороннюю службу распознавания и синтеза речи <strong>NCSpeech Studio</strong>, которая:</p>
+      <ul>
+        <li>расшифровывает вашу речь в текст, чтобы сравнить с ожидаемым словом;</li>
+        <li>по вашему запросу озвучивает казахское слово (эталонное произношение).</li>
+      </ul>
+      <div class="callout">
+        <p>Наш сервер-посредник не сохраняет ваши записи — он только передаёт их в NCSpeech Studio и возвращает результат. Мы не храним аудио на своей стороне. Обработка на стороне NCSpeech Studio регулируется их собственной политикой.</p>
+      </div>
+    </div>
+    <div data-lang="en">
+      <div class="section-head"><span class="section-num">02</span><h2>Voice recordings</h2></div>
+      <p>When you tap the microphone, the app records a short audio clip — the word you say. That clip is sent through our relay server to a third-party speech service, <strong>NCSpeech Studio</strong>, which:</p>
+      <ul>
+        <li>transcribes your speech to compare it against the expected word;</li>
+        <li>reads a Kazakh word back to you (reference pronunciation) when you ask for it.</li>
+      </ul>
+      <div class="callout">
+        <p>Our relay server doesn't store your recordings — it only forwards them to NCSpeech Studio and returns the result. We don't retain audio on our side. Processing on NCSpeech Studio's side is governed by their own policy.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div data-lang="ru">
+      <div class="section-head"><span class="section-num">03</span><h2>Что хранится на вашем устройстве</h2></div>
+      <p>Весь ваш учебный прогресс хранится локально на телефоне и никуда не передаётся:</p>
+    </div>
+    <div data-lang="en">
+      <div class="section-head"><span class="section-num">03</span><h2>What's stored on your device</h2></div>
+      <p>All of your learning progress lives locally on your phone and is never transmitted anywhere:</p>
+    </div>
+
+    <div class="tbl-wrap">
+      <table class="data-table" data-lang="ru">
+        <tr><th>Данные</th><th>Где хранятся</th></tr>
+        <tr><td>Опыт (XP), серия дней подряд</td><td>Только на устройстве</td></tr>
+        <tr><td>Прогресс по карточкам (повторение)</td><td>Только на устройстве</td></tr>
+        <tr><td>Карточки, которые вы создали сами</td><td>Только на устройстве</td></tr>
+      </table>
+      <table class="data-table" data-lang="en" style="display:none">
+        <tr><th>Data</th><th>Where it's stored</th></tr>
+        <tr><td>XP, daily streak</td><td>Device only</td></tr>
+        <tr><td>Spaced-repetition progress per card</td><td>Device only</td></tr>
+        <tr><td>Custom cards you create</td><td>Device only</td></tr>
+      </table>
+    </div>
+
+    <div data-lang="ru"><p>Мы не создаём учётные записи, не просим email или имя, и не связываем эти данные с какой-либо личностью.</p></div>
+    <div data-lang="en"><p>We don't create accounts, don't ask for an email or name, and don't tie this data to any identity.</p></div>
+  </section>
+
+  <section>
+    <div data-lang="ru">
+      <div class="section-head"><span class="section-num">04</span><h2>Чего мы не делаем</h2></div>
+      <ul>
+        <li>Не показываем рекламу и не используем рекламные SDK.</li>
+        <li>Не отслеживаем вас между приложениями или сайтами.</li>
+        <li>Не продаём и не передаём данные третьим лицам, кроме описанной выше передачи голоса в NCSpeech Studio для распознавания речи.</li>
+        <li>Не собираем аналитику использования приложения.</li>
+      </ul>
+    </div>
+    <div data-lang="en">
+      <div class="section-head"><span class="section-num">04</span><h2>What we don't do</h2></div>
+      <ul>
+        <li>No ads, no advertising SDKs.</li>
+        <li>No tracking across other apps or websites.</li>
+        <li>No selling or sharing data with third parties beyond the voice-to-NCSpeech-Studio flow described above.</li>
+        <li>No usage analytics collection.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div data-lang="ru">
+      <div class="section-head"><span class="section-num">05</span><h2>Разрешение на микрофон</h2></div>
+      <p>Приложение запрашивает доступ к микрофону только для того, чтобы вы могли произнести слово на карточке. Запись происходит только пока вы удерживаете активной сессию тренировки и нажимаете кнопку записи — фоновой записи нет.</p>
+    </div>
+    <div data-lang="en">
+      <div class="section-head"><span class="section-num">05</span><h2>Microphone permission</h2></div>
+      <p>The app asks for microphone access only so you can say the word shown on a card. Recording happens only while you're actively in a practice session and pressing the record button — there is no background recording.</p>
+    </div>
+  </section>
+
+  <section>
+    <div data-lang="ru">
+      <div class="section-head"><span class="section-num">06</span><h2>Удаление данных</h2></div>
+      <p>Поскольку весь прогресс хранится локально, для его удаления достаточно удалить приложение с устройства — либо очистить данные приложения в настройках телефона. Отдельного запроса на удаление отправлять не нужно, так как у нас нет серверной копии этих данных.</p>
+    </div>
+    <div data-lang="en">
+      <div class="section-head"><span class="section-num">06</span><h2>Deleting your data</h2></div>
+      <p>Since all progress is stored locally, deleting the app (or clearing its data in your phone's settings) removes it completely. There's no separate deletion request to make — we don't hold a server-side copy of this data.</p>
+    </div>
+  </section>
+
+  <section>
+    <div data-lang="ru">
+      <div class="section-head"><span class="section-num">07</span><h2>Изменения политики</h2></div>
+      <p>Если политика изменится, дата в начале страницы будет обновлена. Существенные изменения (например, появление новых сторонних сервисов) будут отражены здесь до выхода соответствующего обновления приложения.</p>
+    </div>
+    <div data-lang="en">
+      <div class="section-head"><span class="section-num">07</span><h2>Changes to this policy</h2></div>
+      <p>If this policy changes, the date at the top of this page will be updated. Material changes (such as adding a new third-party service) will be reflected here before the corresponding app update ships.</p>
+    </div>
+  </section>
+
+  <section>
+    <div data-lang="ru">
+      <div class="section-head"><span class="section-num">08</span><h2>Связаться с нами</h2></div>
+      <p>Вопросы о конфиденциальности можно направить на <a href="mailto:bigkozha@gmail.com">bigkozha@gmail.com</a>.</p>
+    </div>
+    <div data-lang="en">
+      <div class="section-head"><span class="section-num">08</span><h2>Contact</h2></div>
+      <p>Questions about privacy can be sent to <a href="mailto:bigkozha@gmail.com">bigkozha@gmail.com</a>.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div data-lang="ru">Сөйле — практика казахского произношения вслух.</div>
+  <div data-lang="en">Сөйле — practice Kazakh pronunciation out loud.</div>
+</footer>
+
+<script>
+  function setLang(lang) {
+    document.getElementById('content').setAttribute('data-lang-active', lang);
+    document.body.setAttribute('data-lang-active', lang);
+    document.getElementById('btn-ru').classList.toggle('active', lang === 'ru');
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    document.querySelectorAll('.data-table[data-lang="ru"]').forEach(function(t) {
+      t.style.display = lang === 'ru' ? 'table' : 'none';
+    });
+    document.querySelectorAll('.data-table[data-lang="en"]').forEach(function(t) {
+      t.style.display = lang === 'en' ? 'table' : 'none';
+    });
+    try { localStorage.setItem('soyle-privacy-lang', lang); } catch (e) {}
+  }
+  (function() {
+    var saved = null;
+    try { saved = localStorage.getItem('soyle-privacy-lang'); } catch (e) {}
+    if (saved === 'en') setLang('en');
+  })();
+</script>
