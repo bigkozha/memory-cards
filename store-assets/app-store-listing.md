@@ -81,9 +81,9 @@ kazakh,pronunciation,language,flashcards,speak,learn,kazakhstan,vocabulary,speec
 - **Category**: Education (primary); Reference (secondary, optional)
 - **Age rating**: 4+ (no objectionable content; uses microphone, which the rating questionnaire will ask about — answer "no" to violence/mature content questions)
 - **Privacy Policy URL**: https://claude.ai/code/artifact/88fef1d6-f392-40d3-990b-354940d4ac8d (make public via share menu first — see note above)
-- **Support URL**: needs a real reachable page — could reuse the GitHub repo (https://github.com/bigkozha/memory-cards) as a lightweight support/contact point, or I can build a small "Contact & Support" page similar to the privacy policy. Let me know which you'd prefer.
+- **Support URL**: https://github.com/bigkozha/memory-cards
 - **Marketing URL**: optional, can skip
-- **Contact email**: bigkozha@gmail.com (used in the privacy policy — confirm this is the right one for App Store Connect's public-facing contact too, or give me a different one)
+- **Contact email**: nuraly.zhanbyrbayev@gmail.com
 
 ## App Privacy questionnaire (App Store Connect → App Privacy)
 
