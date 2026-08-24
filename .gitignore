@@ -35,6 +35,7 @@ yarn-error.*
 .env*.local
 server/.dev.vars
 server/.wrangler/
+/credentials/
 
 # vendor docs (not ours to redistribute)
 NCSpeech_Studio_Instruction.pdf

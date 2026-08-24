@@ -9,25 +9,40 @@
     "backgroundColor": "#0F1021",
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.bigkozha.soyle",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Микрофон нужен, чтобы вы могли произносить слова вслух и получать оценку произношения."
+        "NSMicrophoneUsageDescription": "Микрофон нужен, чтобы вы могли произносить слова вслух и получать оценку произношения.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
+      "package": "com.bigkozha.soyle",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0F1021",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": ["RECORD_AUDIO"]
+      "permissions": [
+        "RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-audio"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f75ced9f-0bcc-4054-a9d7-184b2f9c1f5c"
+      }
+    },
+    "owner": "nzhanbyrbayev"
   }
 }
